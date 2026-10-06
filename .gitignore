@@ -1,0 +1,19 @@
+# Backup & editor temporary files
+*~
+*.swp
+*.swo
+*.bak
+\#*#
+.#*
+
+# OS & environment artifacts
+.DS_Store
+Thumbs.db
+
+# Typst output artifacts
+*.pdf
+*.png
+*.svg
+
+# Typst package cache (if local cache or vendor dirs used)
+.typst/
