@@ -2,8 +2,16 @@
 #let lcm = math.op("lcm")
 #let ord = math.op("ord")
 #let char = math.op("char")
-#let an(f) = $chevron.l #f chevron.r$
+#let enc = math.op("enc")
+#let dec = math.op("dec")
+#let wt(x) = $op("wt")(#x)$
+#let dist = math.op("d")
+#let an(..args) = $chevron.l #args.pos().join($,$) chevron.r$
 #let ff(q) = $FF_(#q)$
+#let Ball = math.op("B")
+#let supp = math.op("supp")
+#let span = math.op("span")
+#let rank = math.op("rk")
 #let pmod(n) = $#h(0.3em) (op("mod") #n)$
 #let part-counter = counter("part")
 
@@ -19,9 +27,14 @@
 
 #let book-setup(
   title: "Πεπερασμένα Σώματα και Εφαρμογές",
-  author: none,
+  author: "Θεόδουλος Γαρεφαλάκης",
   body
 ) = {
+  set document(
+    title: title,
+    author: if author != none { author } else { () }
+  )
+
   // Page geometry: top=2.0cm, bottom=3.0cm, left=3.5cm, right=3.5cm
   set page(
     paper: "a4",
@@ -93,11 +106,24 @@
     first-line-indent: 0pt
   )
 
-  // Equation numbering: only number labeled equations
-  show math.equation.where(block: true): it => {
-    if it.has("label") {
-      set math.equation(numbering: "(1.1)")
-      it
+  // Math font
+  show math.equation: set text(font: "Libertinus Math")
+
+  // Equation numbering: only number labeled equations as (chapter.number)
+  set math.equation(numbering: num => context {
+    let h = counter(heading).at(here())
+    let chap = if h.len() > 0 { h.first() } else { 0 }
+    if chap > 0 {
+      "(" + str(chap) + "." + str(num) + ")"
+    } else {
+      "(" + str(num) + ")"
+    }
+  })
+
+  show math.equation: it => {
+    if it.block and not it.has("label") and it.numbering != none {
+      counter(math.equation).update(v => v - 1)
+      math.equation(it.body, block: true, numbering: none)
     } else {
       it
     }
@@ -111,13 +137,15 @@
       pagebreak(weak: true, to: "odd")
       v(1fr)
       align(center)[
-        #text(size: 24pt, weight: "bold")[#it.body]
+        #text(size: 18pt, weight: "regular")[#it.body]
       ]
       v(1fr)
       pagebreak(weak: true)
     } else {
       counter(figure.where(kind: "thm")).update(0)
       counter(math.equation).update(0)
+      counter(figure.where(kind: image)).update(0)
+      counter(figure.where(kind: table)).update(0)
       pagebreak(weak: true)
       v(1.5cm)
       block(width: 100%)[
@@ -163,6 +191,30 @@
       let num = counter(figure.where(kind: "thm")).at(el.location()).first()
       let num-str = str(chap) + "." + str(num)
       link(el.location(), num-str)
+    } else if el != none and el.func() == math.equation {
+      let h = counter(heading).at(el.location())
+      let chap = if h.len() > 0 { h.first() } else { 0 }
+      let num = counter(math.equation).at(el.location()).first()
+      let num-str = if chap > 0 { str(chap) + "." + str(num) } else { str(num) }
+      link(el.location(), "(" + num-str + ")")
+    } else if el != none and el.func() == figure and el.kind != "thm" {
+      let chap = counter(heading).at(el.location()).first()
+      let num = counter(figure.where(kind: el.kind)).at(el.location()).first()
+      let num-str = if chap > 0 { str(chap) + "." + str(num) } else { str(num) }
+      link(el.location(), [#el.supplement #num-str])
+    } else {
+      it
+    }
+  }
+
+  // Figure caption formatting: chapter.figure
+  show figure.caption: it => context {
+    if it.kind != "thm" {
+      let h = counter(heading).at(here())
+      let chap = if h.len() > 0 { h.first() } else { 0 }
+      let num = counter(figure.where(kind: it.kind)).at(here()).first()
+      let num-str = if chap > 0 { str(chap) + "." + str(num) } else { str(num) }
+      [#it.supplement #num-str: #it.body]
     } else {
       it
     }
