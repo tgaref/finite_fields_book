@@ -220,6 +220,14 @@
     }
   }
 
+  // Figure spacing for non-theorems (diagrams, images, tables)
+  show figure.where(kind: image): set block(spacing: 2.2em)
+  show figure.where(kind: image): set figure(gap: 1.2em)
+  show figure.where(kind: table): set block(spacing: 2em)
+  show figure.where(kind: table): set figure(gap: 1em)
+  show figure.where(kind: raw): set block(spacing: 2em)
+  show figure.where(kind: raw): set figure(gap: 1em)
+
   // Theorem figure rendering
   show figure.where(kind: "thm"): it => {
     let chap = counter(heading).at(it.location()).first()
